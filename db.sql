@@ -1,9 +1,3 @@
--- ════════════════════════════════════════════════════════
--- db.sql · AgendaWeb · base y tabla de eventos
--- En MySQL Workbench: pega todo en una pestaña de consulta y ejecuta con el rayo ⚡
--- (o en la terminal: mysql -u root -p  y pégalo en mysql>)
--- ════════════════════════════════════════════════════════
-
 CREATE DATABASE IF NOT EXISTS agenda CHARACTER SET utf8mb4;
 USE agenda;
 
