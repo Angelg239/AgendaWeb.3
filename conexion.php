@@ -3,7 +3,7 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
-    $mysqli = new mysqli('localhost', 'remarkable-environment-coy', '12345678', 'remarkable-environment-coy');
+    $mysqli = new mysqli('localhost', 'root', '123456', 'agenda');
     $mysqli->set_charset('utf8mb4'); 
 } catch (mysqli_sql_exception $e) {
     http_response_code(500);
