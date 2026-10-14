@@ -107,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     <?php endif; ?>
 
+    <!-- action="" = se envía a sí misma -->
     <form method="post" action="">
       <div class="form-group">
         <label class="form-label" for="titulo">Título</label>
@@ -187,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
       </div>
 
-      <button type="submit" class="btn-primary">Guardar evento</button>
+      <button type="submit" class="btn-primary">Guardar</button>
     </form>
 
     <p class="card__link"><a href="index.php">Ver mi agenda</a></p>
