@@ -10,6 +10,7 @@ function e(?string $valor): string
 }
 
 // Inicialización de variables para el formulario
+$idEvento = null;
 $titulo = '';
 $fecha = '';
 $hora = '';
@@ -17,8 +18,45 @@ $categoria = '';
 $descripcion = '';
 $errores = [];
 
-// Procesar solo si el método es POST
+require 'conexion.php';
+
+// 1. SI RECIBIMOS UN ID POR GET, ESTAMOS EDITANDO: Cargar datos actuales de la BD
+if (isset($_GET['id']) && filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
+    $idEvento = (int)$_GET['id'];
+
+    // Solo cargamos los datos si el formulario NO se acaba de enviar por POST
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        try {
+            $stmt = $mysqli->prepare("SELECT titulo, fecha, hora, categoria, descripcion FROM eventos WHERE id = ?");
+            $stmt->bind_param('i', $idEvento);
+            $stmt->execute();
+            $resultado = $stmt->get_result();
+
+            if ($eventoActual = $resultado->fetch_assoc()) {
+                $titulo = $eventoActual['titulo'];
+                $fecha = $eventoActual['fecha'];
+                $hora = $eventoActual['hora'] ? substr($eventoActual['hora'], 0, 5) : '';
+                $categoria = $eventoActual['categoria'];
+                $descripcion = $eventoActual['descripcion'] ?? '';
+            } else {
+                // Si el ID no existe en la base de datos, redirigir al inicio
+                header('Location: index.php');
+                exit;
+            }
+            $stmt->close();
+        } catch (mysqli_sql_exception $e) {
+            $errores['general'] = 'No se pudo cargar el evento para editar.';
+        }
+    }
+}
+
+// 2. Procesar solo si el método es POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Si viene un ID oculto en el formulario, lo recuperamos para saber que es edición
+    if (isset($_POST['id']) && $_POST['id'] !== '') {
+        $idEvento = (int)$_POST['id'];
+    }
+
     // Lectura segura y limpieza de cada campo
     $titulo      = trim($_POST['titulo']      ?? '');
     $fecha       = trim($_POST['fecha']       ?? '');
@@ -52,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 4. Validar categoría
-    $categoriasPermitidas = ['trabajo', 'personal', 'estudio', 'deporte'];
+    $categoriasPermitidas = ['trabajo', 'personal', 'estudio', 'deporte', 'ocio'];
     if ($categoria === '') {
         $errores['categoria'] = 'Debes seleccionar una categoría.';
     } elseif (!in_array($categoria, $categoriasPermitidas, true)) {
@@ -67,16 +105,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Guardar en MySQL si no hay errores
     if (empty($errores)) {
         try {
-            require 'conexion.php';
-
             $valorHora = ($hora === '') ? null : $hora;
             $valorDescripcion = ($descripcion === '') ? null : $descripcion;
 
-            $sql = "INSERT INTO eventos (titulo, fecha, hora, categoria, descripcion) VALUES (?, ?, ?, ?, ?)";
-            $stmt = $mysqli->prepare($sql);
-            $stmt->bind_param('sssss', $titulo, $fecha, $valorHora, $categoria, $valorDescripcion);
-            $stmt->execute();
+            if ($idEvento) {
+                // Si hay ID, actualizamos el registro existente (UPDATE)
+                $sql = "UPDATE eventos SET titulo = ?, fecha = ?, hora = ?, categoria = ?, descripcion = ? WHERE id = ?";
+                $stmt = $mysqli->prepare($sql);
+                $stmt->bind_param('sssssi', $titulo, $fecha, $valorHora, $categoria, $valorDescripcion, $idEvento);
+            } else {
+                // Si no hay ID, creamos uno nuevo (INSERT)
+                $sql = "INSERT INTO eventos (titulo, fecha, hora, categoria, descripcion) VALUES (?, ?, ?, ?, ?)";
+                $stmt = $mysqli->prepare($sql);
+                $stmt->bind_param('sssss', $titulo, $fecha, $valorHora, $categoria, $valorDescripcion);
+            }
 
+            $stmt->execute();
             $stmt->close();
             $mysqli->close();
 
@@ -94,11 +138,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="css/estilos.css" rel="stylesheet">
-    <title>Nuevo evento · AgendaWeb</title>
+    <title><?= $idEvento ? 'Editar evento' : 'Nuevo evento' ?> · AgendaWeb</title>
 </head>
 <body>
 <div class="card">
-    <h1 class="card__title">Nuevo evento</h1>
+    <h1 class="card__title"><?= $idEvento ? 'Editar evento' : 'Nuevo evento' ?></h1>
     <p class="card__meta">AgendaWeb</p>
 
     <?php if (isset($errores['general'])): ?>
@@ -109,6 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- action="" = se envía a sí misma -->
     <form method="post" action="">
+      <!-- Campo oculto indispensable para conservar el ID al enviar el POST en modo edición -->
+      <?php if ($idEvento): ?>
+          <input type="hidden" name="id" value="<?= $idEvento ?>">
+      <?php endif; ?>
+
       <div class="form-group">
         <label class="form-label" for="titulo">Título</label>
         <input 
@@ -169,6 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <option value="personal" <?= $categoria === 'personal' ? 'selected' : '' ?>>Personal</option>
           <option value="estudio" <?= $categoria === 'estudio' ? 'selected' : '' ?>>Estudio</option>
           <option value="deporte" <?= $categoria === 'deporte' ? 'selected' : '' ?>>Deporte</option>
+          <option value="ocio" <?= $categoria === 'ocio' ? 'selected' : '' ?>>Ocio</option>
         </select>
         <?php if (isset($errores['categoria'])): ?>
           <p class="form-error"><?= e($errores['categoria']) ?></p>
@@ -188,7 +238,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
       </div>
 
-      <button type="submit" class="btn-primary">Guardar</button>
+      <button type="submit" class="btn-primary"><?= $idEvento ? 'Actualizar evento' : 'Guardar' ?></button>
     </form>
 
     <p class="card__link"><a href="index.php">Ver mi agenda</a></p>
