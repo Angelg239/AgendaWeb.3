@@ -10,3 +10,16 @@ CREATE TABLE IF NOT EXISTS eventos (
   descripcion VARCHAR(500) NULL,                -- opcional (reto extra)
   creado_en   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE categorias (
+  id     INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL UNIQUE
+);
+
+INSERT INTO categorias (id, nombre) VALUES
+  (1, 'Trabajo'),
+  (2, 'Personal'),
+  (3, 'Estudio'),
+  (4, 'Ocio / Deporte');
+
+SELECT * FROM categorias;
