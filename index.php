@@ -59,17 +59,16 @@ function mostrarEvento(array $ev): string
     $html .= '<span class="badge" style="background: ' . $catInfo['bg'] . '; color: ' . $catInfo['color'] . '; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">'
            . $catInfo['icono'] . ' ' . e(nombreCategoria($catClave)) . '</span>';
     
-    // Botón Editar -> Redirige a editar.php pasando el ID
-    $html .= '<a href="editar.php?id=' . $id . '" '
+    // Botón Editar -> Redirige a registrar.php pasando el ID
+    $html .= '<a href="registrar.php?id=' . $id . '" '
            . 'style="background: #F1F5F9; color: #475569; text-decoration: none; font-size: 0.8rem; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600;" '
            . 'title="Editar evento">✏️ Editar</a>';
 
-    // Formulario para Borrar por POST (apuntando a borrar.php)
-    $html .= '<form action="borrar.php" method="POST" style="display:inline;" onsubmit="return confirm(\'¿Seguro que deseas eliminar este evento?\');">';
-    $html .= '<input type="hidden" name="id" value="' . $id . '">';
-    $html .= '<button type="submit" style="background:none; border:none; color: #94A3B8; cursor:pointer; font-size: 1.1rem; padding: 0.2rem 0.4rem; border-radius: 4px;" title="Eliminar evento">🗑️</button>';
-    $html .= '</form>';
-
+    // Botón / Icono de Borrar
+    $html .= '<a href="index.php?eliminar=' . $id . '" '
+           . 'onclick="return confirm(\'¿Seguro que deseas eliminar este evento?\');" '
+           . 'style="color: #94A3B8; text-decoration: none; font-size: 1.1rem; padding: 0.2rem 0.4rem; border-radius: 4px;" '
+           . 'title="Eliminar evento">🗑️</a>';
     $html .= '</div></div>';
 
     // Fecha y Hora
@@ -94,16 +93,27 @@ function mostrarEvento(array $ev): string
 // LÓGICA PRINCIPAL
 // ==========================================
 
-// Sistema de avisos mediante arreglo asociativo seguro
-$avisos = [
-    '1'       => 'Evento guardado correctamente.',
-    'editado' => 'Cambios guardados.',
-    'borrado' => 'Evento borrado.',
-];
-$aviso    = $avisos[$_GET['ok'] ?? ''] ?? null;
-$hayError = isset($_GET['error']);
-$errorBD  = false;
-$eventos  = [];
+$guardado = isset($_GET['ok']);
+$eliminado = isset($_GET['deleted']);
+$errorBD = false;
+$eventos = [];
+
+// Procesar eliminación si se solicita
+if (isset($_GET['eliminar'])) {
+    $idEliminar = (int)$_GET['eliminar'];
+    try {
+        require 'conexion.php';
+        $stmt = $mysqli->prepare("DELETE FROM eventos WHERE id = ?");
+        $stmt->bind_param("i", $idEliminar);
+        $stmt->execute();
+        $stmt->close();
+        $mysqli->close();
+        header('Location: index.php?deleted=1');
+        exit;
+    } catch (mysqli_sql_exception $e) {
+        $errorBD = true;
+    }
+}
 
 // Consultar los eventos guardados en la base de datos
 try {
@@ -191,13 +201,15 @@ $diaSemanaInicio = date('N', $primerDiaTimestamp); // 1 (Lunes) a 7 (Domingo)
         <a href="registrar.php" class="btn-primary" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; white-space: nowrap;">+ Nuevo evento</a>
     </div>
 
-    <!-- Mensajes de Estado Seguros -->
-    <?php if ($aviso): ?>
-        <div class="alert alert--ok" role="status"><?= e($aviso) ?></div>
+    <!-- Mensajes de Estado -->
+    <?php if ($guardado): ?>
+        <div class="alert alert--ok" role="status">&#9989; Evento guardado correctamente.</div>
     <?php endif; ?>
 
-    <?php if ($hayError): ?>
-        <div class="alert alert--error" role="alert">Ese evento no existe (quizá ya fue borrado).</div>
+    <?php if ($eliminado): ?>
+        <div class="alert alert--ok" role="status" style="background-color: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5;">
+            🗑️ Evento eliminado de la agenda.
+        </div>
     <?php endif; ?>
 
     <?php if ($errorBD): ?>
@@ -274,20 +286,18 @@ $diaSemanaInicio = date('N', $primerDiaTimestamp); // 1 (Lunes) a 7 (Domingo)
     </div>
 </div>
 
-<?php if ($aviso || $hayError): ?>
+<?php if ($guardado || $eliminado): ?>
 <script>
     // Oculta las alertas tras 3 segundos
     setTimeout(function() {
-        const alertas = document.querySelectorAll('.alert');
-        alertas.forEach(alerta => {
-            if (alerta) {
-                alerta.style.transition = 'opacity 0.5s ease';
-                alerta.style.opacity = '0';
-                setTimeout(function() {
-                    alerta.remove();
-                }, 500);
-            }
-        });
+        const alerta = document.querySelector('.alert');
+        if (alerta) {
+            alerta.style.transition = 'opacity 0.5s ease';
+            alerta.style.opacity = '0';
+            setTimeout(function() {
+                alerta.remove();
+            }, 500);
+        }
     }, 3000);
 </script>
 <?php endif; ?>
