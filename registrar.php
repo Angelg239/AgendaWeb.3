@@ -9,48 +9,45 @@ function e(?string $valor): string
     return htmlspecialchars($valor ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-// Inicialización de variables para el formulario
+require 'conexion.php';
+
+// Inicialización de variables por defecto (Nuevo evento)
 $idEvento = null;
 $titulo = '';
 $fecha = '';
 $hora = '';
-$categoria = '';
+$categoria = '';    
 $descripcion = '';
 $errores = [];
 
-require 'conexion.php';
-
-// 1. SI RECIBIMOS UN ID POR GET, ESTAMOS EDITANDO: Cargar datos actuales de la BD
+// 1. Si recibimos un ID por GET, cargamos los datos actuales de la BD
 if (isset($_GET['id']) && filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
     $idEvento = (int)$_GET['id'];
 
-    // Solo cargamos los datos si el formulario NO se acaba de enviar por POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        try {
-            $stmt = $mysqli->prepare("SELECT titulo, fecha, hora, categoria, descripcion FROM eventos WHERE id = ?");
-            $stmt->bind_param('i', $idEvento);
-            $stmt->execute();
-            $resultado = $stmt->get_result();
+    try {
+        $stmt = $mysqli->prepare("SELECT titulo, fecha, hora, categoria, descripcion FROM eventos WHERE id = ?");
+        $stmt->bind_param('i', $idEvento);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
 
-            if ($eventoActual = $resultado->fetch_assoc()) {
-                $titulo = $eventoActual['titulo'];
-                $fecha = $eventoActual['fecha'];
-                $hora = $eventoActual['hora'] ? substr($eventoActual['hora'], 0, 5) : '';
-                $categoria = $eventoActual['categoria'];
-                $descripcion = $eventoActual['descripcion'] ?? '';
-            } else {
-                // Si el ID no existe en la base de datos, redirigir al inicio
-                header('Location: index.php');
-                exit;
-            }
-            $stmt->close();
-        } catch (mysqli_sql_exception $e) {
-            $errores['general'] = 'No se pudo cargar el evento para editar.';
+        if ($evento = $resultado->fetch_assoc()) {
+            $titulo = $evento['titulo'];
+            $fecha = $evento['fecha'];
+            $hora = $evento['hora'] ? substr($evento['hora'], 0, 5) : '';
+            $categoria = $evento['categoria'];
+            $descripcion = $evento['descripcion'] ?? '';
+        } else {
+            // Si el ID no existe en la base de datos, redirigir al inicio
+            header('Location: index.php');
+            exit;
         }
+        $stmt->close();
+    } catch (mysqli_sql_exception $e) {
+        $errores['general'] = 'No se pudo cargar el evento para editar.';
     }
 }
 
-// 2. Procesar solo si el método es POST
+// 2. Procesar solo si el método es POST (si se envía el formulario, sobrescribe con lo que escribió el usuario)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Si viene un ID oculto en el formulario, lo recuperamos para saber que es edición
     if (isset($_POST['id']) && $_POST['id'] !== '') {
@@ -58,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Lectura segura y limpieza de cada campo
-    $titulo      = trim($_POST['titulo']      ?? '');
-    $fecha       = trim($_POST['fecha']       ?? '');
-    $hora        = trim($_POST['hora']        ?? '');
-    $categoria   = trim($_POST['categoria']   ?? '');
+    $titulo      = trim($_POST['titulo']       ?? '');
+    $fecha       = trim($_POST['fecha']        ?? '');
+    $hora        = trim($_POST['hora']         ?? '');
+    $categoria   = trim($_POST['categoria']    ?? '');
     $descripcion = trim($_POST['descripcion'] ?? '');
 
     // 1. Validar título
