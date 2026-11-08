@@ -1,0 +1,19 @@
+KIT DE ARRANQUE · AgendaWeb · Rescate P2-P3
+==========================================
+
+Esta carpeta va en:   tu carpeta de proyectos (ej. Documentos\agenda-web\)
+Para probarla:        en la terminal, DENTRO de agenda-web:  php -S localhost:8000
+Se abre en:           http://localhost:8000/registrar.php
+
+Archivos:
+  registrar.php ........ formulario + procesamiento (TU trabajo: los TODO)
+  index.php ............ página principal (ya está completa)
+  conexion.ejemplo.php . plantilla de conexión (cópiala como conexion.php)
+  db.sql ............... crea la base "agenda" y la tabla "eventos"
+  css/estilos.css ...... estilos listos: tú solo cambias el bloque MARCA
+  .gitignore ........... evita subir conexion.php a GitHub
+
+Sigue la guía de rescate paso a paso. Cada TODO dice en qué paso se completa.
+
+Regla de oro: no pegues código que no puedas explicar,
+y nunca pegues tu contraseña en la IA.
