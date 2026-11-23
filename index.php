@@ -22,23 +22,24 @@ function formatearFecha(string $fecha): string
     return date('d/m/Y', strtotime($fecha));
 }
 
-// 'ocio'  →  'Ocio / Deporte'
-function nombreCategoria(string $clave): string
+function claveCategoria(string $nombre): string
 {
-    $nombres = [
-        'trabajo'  => 'Trabajo',
-        'personal' => 'Personal',
-        'estudio'  => 'Estudio',
-        'deporte'  => 'Deporte',
-        'ocio'     => 'Ocio / Deporte',
+    $claves = [
+        'trabajo'  => 'trabajo',
+        'personal' => 'personal',
+        'estudio'  => 'estudio',
+        'deporte'  => 'deporte',
+        'ocio'     => 'ocio',
+        'ocio / deporte' => 'ocio',
     ];
-    return $nombres[$clave] ?? $clave;   // si la clave no existe, devuelve la original
+
+    return $claves[strtolower(trim($nombre))] ?? 'otra';
 }
 
 // Recibe un evento y devuelve el HTML de su tarjeta
 function mostrarEvento(array $ev): string
 {
-    $catClave = strtolower($ev['categoria']);
+    $catClave = claveCategoria($ev['categoria']);
     
     // Mapa de colores e iconos por categoría
     $estilosCategorias = [
@@ -60,7 +61,7 @@ function mostrarEvento(array $ev): string
     
     $html .= '<div style="display: flex; align-items: center; gap: 0.5rem;">';
     $html .= '<span class="badge" style="background: ' . $catInfo['bg'] . '; color: ' . $catInfo['color'] . '; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">'
-           . $catInfo['icono'] . ' ' . e(nombreCategoria($catClave)) . '</span>';
+           . $catInfo['icono'] . ' ' . e($ev['categoria']) . '</span>';
     
     // Botón Editar -> Redirige a registrar.php pasando el ID
     $html .= '<a href="registrar.php?id=' . $id . '" '
@@ -122,7 +123,13 @@ if (isset($_GET['eliminar'])) {
 try {
     require 'conexion.php';
 
-    $stmt = $mysqli->prepare("SELECT id, titulo, fecha, hora, categoria, descripcion FROM eventos WHERE usuario_id = ? ORDER BY fecha ASC, hora ASC");
+    $stmt = $mysqli->prepare(
+        "SELECT e.id, e.titulo, e.fecha, e.hora, c.nombre AS categoria, e.descripcion
+         FROM eventos e
+         JOIN categorias c ON c.id = e.categoria_id
+         WHERE e.usuario_id = ?
+         ORDER BY e.fecha ASC, e.hora ASC"
+    );
     $stmt->bind_param("i", $usuarioId);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -140,7 +147,7 @@ try {
 // Contadores por categoría
 $conteoCategorias = ['trabajo' => 0, 'personal' => 0, 'estudio' => 0, 'deporte' => 0, 'ocio' => 0];
 foreach ($eventos as $ev) {
-    $cat = strtolower($ev['categoria']);
+    $cat = claveCategoria($ev['categoria']);
     if (isset($conteoCategorias[$cat])) {
         $conteoCategorias[$cat]++;
     }

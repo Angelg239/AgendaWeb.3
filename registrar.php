@@ -14,12 +14,14 @@ function e(?string $valor): string
 
 require 'conexion.php';
 
+$categorias = $mysqli->query('SELECT id, nombre FROM categorias ORDER BY id')->fetch_all(MYSQLI_ASSOC);
+
 // Inicialización de variables por defecto (Nuevo evento)
 $idEvento = null;
 $titulo = '';
 $fecha = '';
 $hora = '';
-$categoria = '';     
+$categoriaId = 0;
 $descripcion = '';
 $errores = [];
 
@@ -28,7 +30,7 @@ if (isset($_GET['id']) && filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
     $idEvento = (int)$_GET['id'];
 
     try {
-        $stmt = $mysqli->prepare("SELECT titulo, fecha, hora, categoria, descripcion FROM eventos WHERE id = ? AND usuario_id = ?");
+        $stmt = $mysqli->prepare("SELECT titulo, fecha, hora, categoria_id, descripcion FROM eventos WHERE id = ? AND usuario_id = ?");
         $stmt->bind_param('ii', $idEvento, $usuarioId);
         $stmt->execute();
         $resultado = $stmt->get_result();
@@ -37,7 +39,7 @@ if (isset($_GET['id']) && filter_var($_GET['id'], FILTER_VALIDATE_INT)) {
             $titulo = $evento['titulo'];
             $fecha = $evento['fecha'];
             $hora = $evento['hora'] ? substr($evento['hora'], 0, 5) : '';
-            $categoria = $evento['categoria'];
+            $categoriaId = (int) $evento['categoria_id'];
             $descripcion = $evento['descripcion'] ?? '';
         } else {
             // Si el ID no existe o no es de este usuario, redirigir al inicio
@@ -60,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titulo       = trim($_POST['titulo']       ?? '');
     $fecha        = trim($_POST['fecha']        ?? '');
     $hora         = trim($_POST['hora']         ?? '');
-    $categoria    = trim($_POST['categoria']    ?? '');
+    $categoriaId  = filter_var($_POST['categoria_id'] ?? '', FILTER_VALIDATE_INT);
+    $categoriaId  = ($categoriaId === false) ? 0 : $categoriaId;
     $descripcion  = trim($_POST['descripcion'] ?? '');
 
     // 1. Validar título
@@ -89,11 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 4. Validar categoría
-    $categoriasPermitidas = ['trabajo', 'personal', 'estudio', 'deporte', 'ocio'];
-    if ($categoria === '') {
+    $categoriasPermitidas = array_map('intval', array_column($categorias, 'id'));
+    if (!in_array($categoriaId, $categoriasPermitidas, true)) {
         $errores['categoria'] = 'Debes seleccionar una categoría.';
-    } elseif (!in_array($categoria, $categoriasPermitidas, true)) {
-        $errores['categoria'] = 'La categoría seleccionada no es válida.';
     }
 
     // 5. Validar descripción
@@ -109,14 +110,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($idEvento) {
                 // Si hay ID, actualizamos el registro existente (UPDATE) validando usuario_id
-                $sql = "UPDATE eventos SET titulo = ?, fecha = ?, hora = ?, categoria = ?, descripcion = ? WHERE id = ? AND usuario_id = ?";
+                $sql = "UPDATE eventos SET titulo = ?, fecha = ?, hora = ?, categoria_id = ?, descripcion = ? WHERE id = ? AND usuario_id = ?";
                 $stmt = $mysqli->prepare($sql);
-                $stmt->bind_param('sssssii', $titulo, $fecha, $valorHora, $categoria, $valorDescripcion, $idEvento, $usuarioId);
+                $stmt->bind_param('sssisii', $titulo, $fecha, $valorHora, $categoriaId, $valorDescripcion, $idEvento, $usuarioId);
             } else {
                 // Si no hay ID, creamos uno nuevo (INSERT) asociándolo al $usuarioId actual
-                $sql = "INSERT INTO eventos (usuario_id, titulo, fecha, hora, categoria, descripcion) VALUES (?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO eventos (usuario_id, titulo, fecha, hora, categoria_id, descripcion) VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt = $mysqli->prepare($sql);
-                $stmt->bind_param('isssss', $usuarioId, $titulo, $fecha, $valorHora, $categoria, $valorDescripcion);
+                $stmt->bind_param('isssis', $usuarioId, $titulo, $fecha, $valorHora, $categoriaId, $valorDescripcion);
             }
 
             $stmt->execute();
@@ -140,9 +141,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title><?= $idEvento ? 'Editar evento' : 'Nuevo evento' ?> · AgendaWeb</title>
 </head>
 <body>
-<div class="card">
-    <h1 class="card__title"><?= $idEvento ? 'Editar evento' : 'Nuevo evento' ?></h1>
-    <p class="card__meta">Hola, <?= e($usuarioNombre) ?></p>
+<div class="card event-form-card">
+    <header class="event-form-header">
+      <span class="event-form-header__icon" aria-hidden="true">📅</span>
+      <div>
+        <p class="event-form-header__eyebrow"><?= $idEvento ? 'Editar agenda' : 'Organiza tu tiempo' ?></p>
+        <h1 class="card__title"><?= $idEvento ? 'Editar evento' : 'Nuevo evento' ?></h1>
+        <p class="card__meta">Hola, <?= e($usuarioNombre) ?>. Completa los detalles de tu evento.</p>
+      </div>
+    </header>
 
     <?php if (isset($errores['general'])): ?>
       <div class="alert alert--error">
@@ -151,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <!-- action="" = se envía a sí misma -->
-    <form method="post" action="">
+    <form class="event-form" method="post" action="">
       <!-- Campo oculto indispensable para conservar el ID al enviar el POST en modo edición -->
       <?php if ($idEvento): ?>
           <input type="hidden" name="id" value="<?= $idEvento ?>">
@@ -165,6 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           id="titulo" 
           class="form-input<?= isset($errores['titulo']) ? ' is-invalid' : '' ?>" 
           value="<?= e($titulo) ?>" 
+          placeholder="Ej. Entregar proyecto"
           required 
           maxlength="120"
         >
@@ -205,19 +213,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="categoria">Categoría</label>
+        <label class="form-label" for="categoria_id">Categoría</label>
         <select 
-          name="categoria" 
-          id="categoria" 
+          name="categoria_id"
+          id="categoria_id"
           class="form-select<?= isset($errores['categoria']) ? ' is-invalid' : '' ?>" 
           required
         >
           <option value="">— Elige una —</option>
-          <option value="trabajo" <?= $categoria === 'trabajo' ? 'selected' : '' ?>>Trabajo</option>
-          <option value="personal" <?= $categoria === 'personal' ? 'selected' : '' ?>>Personal</option>
-          <option value="estudio" <?= $categoria === 'estudio' ? 'selected' : '' ?>>Estudio</option>
-          <option value="deporte" <?= $categoria === 'deporte' ? 'selected' : '' ?>>Deporte</option>
-          <option value="ocio" <?= $categoria === 'ocio' ? 'selected' : '' ?>>Ocio</option>
+          <?php foreach ($categorias as $categoria): ?>
+            <?php $idCategoria = (int) $categoria['id']; ?>
+            <option value="<?= $idCategoria ?>" <?= $categoriaId === $idCategoria ? 'selected' : '' ?>><?= e($categoria['nombre']) ?></option>
+          <?php endforeach; ?>
         </select>
         <?php if (isset($errores['categoria'])): ?>
           <p class="form-error"><?= e($errores['categoria']) ?></p>
@@ -230,17 +237,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           name="descripcion" 
           id="descripcion" 
           class="form-textarea<?= isset($errores['descripcion']) ? ' is-invalid' : '' ?>" 
+          placeholder="Agrega notas o detalles que quieras recordar..."
           maxlength="500"
+          rows="4"
         ><?= e($descripcion) ?></textarea>
         <?php if (isset($errores['descripcion'])): ?>
           <p class="form-error"><?= e($errores['descripcion']) ?></p>
         <?php endif; ?>
       </div>
 
-      <button type="submit" class="btn-primary"><?= $idEvento ? 'Actualizar evento' : 'Guardar' ?></button>
+      <div class="event-form-actions">
+        <a href="index.php" class="btn-secondary">Cancelar</a>
+        <button type="submit" class="btn-primary"><?= $idEvento ? 'Guardar cambios' : 'Guardar evento' ?></button>
+      </div>
     </form>
-
-    <p class="card__link"><a href="index.php">Ver mi agenda</a></p>
 </div>
 </body>
 </html>

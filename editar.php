@@ -11,6 +11,8 @@ function e(?string $valor): string
 
 require 'conexion.php';
 
+$categorias = $mysqli->query('SELECT id, nombre FROM categorias ORDER BY id')->fetch_all(MYSQLI_ASSOC);
+
 // Inicialización de variables
 $id = null;
 $titulo = '';
@@ -91,7 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($categoriaId <= 0) {
+    $categoriasPermitidas = array_map('intval', array_column($categorias, 'id'));
+    if (!in_array($categoriaId, $categoriasPermitidas, true)) {
         $errores['categoria'] = 'Debes seleccionar una categoría válida.';
     }
 
@@ -200,11 +203,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               required
             >
               <option value="">— Elige una —</option>
-              <option value="1" <?= $categoriaId === 1 ? 'selected' : '' ?>>Trabajo</option>
-              <option value="2" <?= $categoriaId === 2 ? 'selected' : '' ?>>Personal</option>
-              <option value="3" <?= $categoriaId === 3 ? 'selected' : '' ?>>Estudio</option>
-              <option value="4" <?= $categoriaId === 4 ? 'selected' : '' ?>>Deporte</option>
-              <option value="5" <?= $categoriaId === 5 ? 'selected' : '' ?>>Ocio</option>
+              <?php foreach ($categorias as $categoria): ?>
+                <?php $idCategoria = (int) $categoria['id']; ?>
+                <option value="<?= $idCategoria ?>" <?= $categoriaId === $idCategoria ? 'selected' : '' ?>><?= e($categoria['nombre']) ?></option>
+              <?php endforeach; ?>
             </select>
             <?php if (isset($errores['categoria'])): ?>
               <p class="form-error"><?= e($errores['categoria']) ?></p>

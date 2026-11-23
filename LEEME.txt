@@ -9,9 +9,13 @@ Archivos:
   registrar.php ........ formulario + procesamiento (TU trabajo: los TODO)
   index.php ............ página principal (ya está completa)
   conexion.ejemplo.php . plantilla de conexión (cópiala como conexion.php)
-  db.sql ............... crea la base "agenda" y la tabla "eventos"
+  db.sql ............... crea la base "agenda", las categorías y la tabla "eventos"
+  migracion_categoria_id.sql . migra eventos existentes a categoria_id
   css/estilos.css ...... estilos listos: tú solo cambias el bloque MARCA
   .gitignore ........... evita subir conexion.php a GitHub
+
+Si ya tienes una base "agenda", respáldala y ejecuta migracion_categoria_id.sql una sola vez.
+Para una instalación nueva, usa db.sql en lugar de la migración.
 
 Sigue la guía de rescate paso a paso. Cada TODO dice en qué paso se completa.
 
