@@ -210,10 +210,11 @@ $diaSemanaInicio = date('N', $primerDiaTimestamp); // 1 (Lunes) a 7 (Domingo)
             <h1 class="card__title" style="margin: 0; font-size: 1.8rem;">Mi agenda</h1>
             <p class="card__meta" style="margin: 0.2rem 0 0 0;">Hola, <strong><?= e($usuarioNombre) ?></strong> | Total: <?= count($eventos) ?> evento(s)</p>
         </div>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <nav aria-label="Navegación principal" style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="explorar.php" class="nav__link">Explorar</a>
             <a href="registrar.php" class="btn-primary" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; white-space: nowrap;">+ Nuevo evento</a>
             <a href="logout.php" class="btn-primary" style="text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; white-space: nowrap; background: #DC2626;">Salir</a>
-        </div>
+        </nav>
     </div>
 
     <!-- Mensajes de Estado -->

@@ -221,6 +221,98 @@ body.auth-page {
   border-color: var(--color-acento);
 }
 
+.nav__link {
+  color: var(--color-acento-oscuro);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav__link:hover {
+  color: var(--color-acento);
+}
+
+.nav__link.is-active {
+  color: var(--color-acento);
+}
+
+.explorar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #F1F5F9;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.explorar-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #F1F5F9;
+  color: #64748B;
+  font-size: 0.85rem;
+}
+
+.contenedor {
+  width: 100%;
+}
+
+.page__header {
+  margin-bottom: 1.25rem;
+}
+
+.page__title {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 1.8rem;
+}
+
+.page__subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-texto-suave);
+}
+
+.buscador {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.explorar-evento {
+  padding: 1.2rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  background: var(--color-superficie);
+}
+
+.explorar-evento h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.explorar-evento p {
+  margin: 0.35rem 0 0;
+}
+
+.explorar-evento__categoria {
+  color: var(--color-acento-oscuro);
+  font-weight: 700;
+}
+
 /* Campo con error (lo agregas en el Paso 7) */
 .form-input.is-invalid,
 .form-select.is-invalid,
@@ -429,6 +521,19 @@ body.auth-page {
 @media (max-width: 480px) {
   body.auth-page {
     padding: 18px 12px;
+  }
+
+  .explorar-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-nav {
+    flex-wrap: wrap;
+  }
+
+  .buscador {
+    grid-template-columns: 1fr;
   }
 
   .auth-card {
