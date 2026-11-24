@@ -48,25 +48,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="css/estilos.css" rel="stylesheet">
     <title>Iniciar sesión · AgendaWeb</title>
 </head>
-<body>
-<div class="card">
-    <h1 class="card__title">Iniciar sesión</h1>
-    <p class="card__meta">AgendaWeb</p>
+<body class="auth-page">
+<main class="card auth-card">
+    <header class="auth-header">
+        <div class="auth-brand">
+            <span class="auth-brand__icon" aria-hidden="true">📅</span>
+            <span>AgendaWeb</span>
+        </div>
+        <p class="auth-header__eyebrow">Bienvenido de nuevo</p>
+        <h1 class="card__title">Iniciar sesión</h1>
+        <p class="card__meta">Accede para consultar y organizar tus eventos.</p>
+    </header>
 
     <?php if (isset($_GET['registrado'])): ?>
-        <div class="alert alert--ok">Cuenta creada. Ya puedes iniciar sesión.</div>
+        <div class="alert alert--ok" role="status">Cuenta creada. Ya puedes iniciar sesión.</div>
     <?php endif; ?>
     <?php if (isset($_GET['salio'])): ?>
-        <div class="alert alert--ok">Cerraste sesión. ¡Hasta pronto!</div>
+        <div class="alert alert--ok" role="status">Cerraste sesión. ¡Hasta pronto!</div>
     <?php endif; ?>
     <?php if ($error): ?>
-        <div class="alert alert--error"><?= e($error) ?></div>
+        <div class="alert alert--error" role="alert"><?= e($error) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="">
+    <form class="auth-form" method="post" action="">
         <div class="form-group">
             <label class="form-label" for="correo">Correo</label>
-            <input type="email" name="correo" id="correo" class="form-input" value="<?= e($correo) ?>" required>
+            <input type="email" name="correo" id="correo" class="form-input" value="<?= e($correo) ?>" placeholder="tu@correo.com" autocomplete="username" required>
         </div>
 
         <div class="form-group">
@@ -74,10 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="password" name="clave" id="clave" class="form-input" autocomplete="current-password" required>
         </div>
 
-        <button type="submit" class="btn-primary">Entrar</button>
+        <button type="submit" class="btn-primary">
+            <span>Entrar</span>
+            <span aria-hidden="true">→</span>
+        </button>
     </form>
 
-    <p class="card__link"><a href="registro.php">¿No tienes cuenta? Crear cuenta</a></p>
-</div>
+    <p class="auth-footer">¿No tienes cuenta? <a href="registro.php">Crear cuenta</a></p>
+</main>
 </body>
 </html>

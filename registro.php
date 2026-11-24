@@ -67,19 +67,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="css/estilos.css" rel="stylesheet">
     <title>Crear cuenta · AgendaWeb</title>
 </head>
-<body>
-<div class="card">
-    <h1 class="card__title">Crear cuenta</h1>
-    <p class="card__meta">AgendaWeb</p>
+<body class="auth-page">
+<main class="card auth-card">
+    <header class="auth-header">
+        <div class="auth-brand">
+            <span class="auth-brand__icon" aria-hidden="true">📅</span>
+            <span>AgendaWeb</span>
+        </div>
+        <p class="auth-header__eyebrow">Empieza hoy</p>
+        <h1 class="card__title">Crear cuenta</h1>
+        <p class="card__meta">Regístrate para empezar a organizar tus eventos.</p>
+    </header>
 
     <?php if (isset($errores['general'])): ?>
-      <div class="alert alert--error">
+      <div class="alert alert--error" role="alert">
         <?= e($errores['general']) ?>
       </div>
     <?php endif; ?>
 
     <!-- action="" = se envía a sí misma -->
-    <form method="post" action="">
+    <form class="auth-form" method="post" action="">
       <div class="form-group">
         <label class="form-label" for="nombre">Nombre</label>
         <input 
@@ -88,11 +95,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           id="nombre" 
           class="form-input<?= isset($errores['nombre']) ? ' is-invalid' : '' ?>" 
           value="<?= e($nombre) ?>" 
+          placeholder="Tu nombre"
+          autocomplete="name"
+          aria-invalid="<?= isset($errores['nombre']) ? 'true' : 'false' ?>"
+          <?php if (isset($errores['nombre'])): ?>aria-describedby="error-nombre"<?php endif; ?>
           required 
           maxlength="80"
         >
         <?php if (isset($errores['nombre'])): ?>
-          <p class="form-error"><?= e($errores['nombre']) ?></p>
+          <p class="form-error" id="error-nombre"><?= e($errores['nombre']) ?></p>
         <?php endif; ?>
       </div>
 
@@ -104,10 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           id="correo" 
           class="form-input<?= isset($errores['correo']) ? ' is-invalid' : '' ?>" 
           value="<?= e($correo) ?>" 
+          placeholder="tu@correo.com"
+          autocomplete="email"
+          aria-invalid="<?= isset($errores['correo']) ? 'true' : 'false' ?>"
+          <?php if (isset($errores['correo'])): ?>aria-describedby="error-correo"<?php endif; ?>
           required
         >
         <?php if (isset($errores['correo'])): ?>
-          <p class="form-error"><?= e($errores['correo']) ?></p>
+          <p class="form-error" id="error-correo"><?= e($errores['correo']) ?></p>
         <?php endif; ?>
       </div>
 
@@ -120,10 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           class="form-input<?= isset($errores['clave']) ? ' is-invalid' : '' ?>" 
           minlength="8" 
           autocomplete="new-password" 
+          aria-invalid="<?= isset($errores['clave']) ? 'true' : 'false' ?>"
+          <?php if (isset($errores['clave'])): ?>aria-describedby="error-clave"<?php endif; ?>
           required
         >
+        <p class="auth-helper">Usa al menos 8 caracteres.</p>
         <?php if (isset($errores['clave'])): ?>
-          <p class="form-error"><?= e($errores['clave']) ?></p>
+          <p class="form-error" id="error-clave"><?= e($errores['clave']) ?></p>
         <?php endif; ?>
       </div>
 
@@ -136,17 +154,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           class="form-input<?= isset($errores['clave2']) ? ' is-invalid' : '' ?>" 
           minlength="8" 
           autocomplete="new-password" 
+          aria-invalid="<?= isset($errores['clave2']) ? 'true' : 'false' ?>"
+          <?php if (isset($errores['clave2'])): ?>aria-describedby="error-clave2"<?php endif; ?>
           required
         >
         <?php if (isset($errores['clave2'])): ?>
-          <p class="form-error"><?= e($errores['clave2']) ?></p>
+          <p class="form-error" id="error-clave2"><?= e($errores['clave2']) ?></p>
         <?php endif; ?>
       </div>
 
-      <button type="submit" class="btn-primary">Crear cuenta</button>
+      <button type="submit" class="btn-primary">
+        <span>Crear mi cuenta</span>
+        <span aria-hidden="true">→</span>
+      </button>
     </form>
 
-    <p class="card__link"><a href="login.php">¿Ya tengo cuenta? Inicia sesión</a></p>
-</div>
+    <p class="auth-footer">¿Ya tienes cuenta? <a href="login.php">Inicia sesión</a></p>
+</main>
 </body>
 </html>
